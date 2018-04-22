@@ -1,0 +1,5 @@
+name: DataImporter
+version: "1.0"
+description: Imports data from CSV to collection
+developer: Stefan Göllner
+developer_url: www.goellner.io

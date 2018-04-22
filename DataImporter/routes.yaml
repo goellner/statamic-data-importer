@@ -1,0 +1,16 @@
+routes:
+  /:
+    as: addons.data_importer
+    uses: index
+  post@targetselect:
+    uses: targetselect
+    as: data_importer.targetselect
+  post@showdata:
+    uses: showdata
+    as: data_importer.showdata
+  post@import:
+    uses: import
+    as: data_importer.import
+  post@finalize:
+    uses: finalize
+    as: data_importer.finalize
