@@ -23,7 +23,13 @@ Vue.component('data_importer-fieldtype', {
     },
 
     methods: {
-        //
+        autoSelectOption: function(key, option) {
+            if(option === key) {
+                return 'selected';
+            } else {
+                return '';
+            }
+        }
     },
 
     ready: function() {
@@ -57,7 +63,7 @@ Vue.component('data_importer-fieldtype', {
             <label class="block">{{ item.display || item.key }}</label>
             <select name="mapping[{{ item.key }}]">
                 <option value="">&nbsp;</option>
-                <option v-for="option in config.uploaded_data_keys" :value="option">{{ option }}</option>
+                <option v-for="option in config.uploaded_data_keys" :value="option" :selected="autoSelectOption(item.key, option)">{{ option }}</option>
             </select>
             </div>
         </div>
