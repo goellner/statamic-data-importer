@@ -22,15 +22,15 @@ class DataImporterController extends Controller
         return $this->view('index');
     }
 
-    public function targetselect(){
-
+    public function targetselect()
+    {
         return $this->view('targetselect');
     }
 
-    public function showdata() {
-
-        if(isset($_POST['csv_delimiter'])) {
-            $csv_delimiter = $_POST['csv_delimiter'];
+    public function showdata()
+    {
+        if (request('csv_delimiter')) {
+            $csv_delimiter = request('csv_delimiter');
         } else {
             $csv_delimiter = ',';
         }
@@ -38,7 +38,7 @@ class DataImporterController extends Controller
         $this->request->session()->put('uploaded_data', $uploaded_data);
 
         $uploaded_data_keys = [];
-        foreach($uploaded_data as $single_uploaded_data) {
+        foreach ($uploaded_data as $single_uploaded_data) {
             $uploaded_data_keys = array_keys($single_uploaded_data);
         }
 
@@ -51,8 +51,9 @@ class DataImporterController extends Controller
     }
 
 
-    public function import(){
-        $handle = $_POST['selectedcollection'];
+    public function import()
+    {
+        $handle = request('selectedcollection');
         $collection = Collection::whereHandle($handle);
         $collection_fieldset = $collection->get('fieldset');
         $fieldset = Fieldset::get($collection_fieldset);
@@ -74,9 +75,12 @@ class DataImporterController extends Controller
         return $this->view('import', $data);
     }
 
-    private function csv_to_array($file, $csv_delimiter = ',') {
-        $ret = array_map(function($v) use ($csv_delimiter){return str_getcsv($v, $csv_delimiter);}, file($file));
-        array_walk($ret, function(&$a) use ($ret) {
+    private function csv_to_array($file, $csv_delimiter = ',')
+    {
+        $ret = array_map(function ($v) use ($csv_delimiter) {
+            return str_getcsv($v, $csv_delimiter);
+        }, file($file));
+        array_walk($ret, function (&$a) use ($ret) {
             $a = array_combine($ret[0], $a);
         });
         array_shift($ret);
@@ -84,10 +88,11 @@ class DataImporterController extends Controller
         return $ret;
     }
 
-    public function finalize() {
-        $mapping = $_POST['mapping'];
-        if(isset($_POST['array_delmiter'])) {
-            $array_delimiter = $_POST['array_delmiter'];
+    public function finalize()
+    {
+        $mapping = request('mapping');
+        if (request('array_delmiter')) {
+            $array_delimiter = request('array_delmiter');
         } else {
             $array_delimiter = '|';
         }
@@ -95,43 +100,46 @@ class DataImporterController extends Controller
         $entries = $this->request->session()->get('uploaded_data');
         $collection = $this->request->session()->get('selected_collection');
         $this->save($entries, $collection, $mapping, $array_delimiter);
-        // TODO: Remove Session data
+
+        $this->request->session()->remove('uploaded_data');
+        $this->request->session()->remove('selected_collection');
+        $this->request->session()->remove('selected_collection_fields');
 
         return $this->view('finalize');
     }
 
-    private function save($entries,  $collection, $mapping, $array_delimiter) {
-
+    private function save($entries, $collection, $mapping, $array_delimiter)
+    {
         $self = $this;
 
-        $mapped_data = collect($entries)->map(function ($entry) use($mapping){
+        $mapped_data = collect($entries)->map(function ($entry) use ($mapping) {
             $ret = array();
 
             foreach ($mapping as $key => $value) {
-                if(array_key_exists($value, $entry)) {
+                if (array_key_exists($value, $entry)) {
                     $ret[$key] = $entry[$value];
                 }
             }
 
             return $ret;
-        })->each(function ($entry) use($collection, $self, $array_delimiter) {
+        })->each(function ($entry) use ($collection, $self, $array_delimiter) {
             $self->writeEntry($collection, $entry, $array_delimiter);
         });
     }
 
-    private function writeEntry($collection, $mapped_data, $array_delimiter){
-
+    private function writeEntry($collection, $mapped_data, $array_delimiter)
+    {
         $entry = Entry::whereSlug(Str::slug($mapped_data['title']), $collection);
 
-        if(!$entry) {
-        $date = date('Y-m-d-Hi');
+        if (!$entry) {
+            $date = date('Y-m-d-Hi');
             $entry = Entry::create(Str::slug($mapped_data['title']))
                         ->collection($collection)
                         ->get();
         }
 
-        foreach($mapped_data as $key => $value) {
-            if(strpos($value, $array_delimiter)) {
+        foreach ($mapped_data as $key => $value) {
+            if (strpos($value, $array_delimiter)) {
                 $value = explode($array_delimiter, $value);
             }
             $entry->set($key, $value);
@@ -139,5 +147,4 @@ class DataImporterController extends Controller
 
         $entry->save();
     }
-
 }
