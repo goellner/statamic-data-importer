@@ -20,7 +20,7 @@
         </div>
         <div class="card">
             <p class="help-block">
-                This page shows the first five items of your data. If your data looks good, press continue.
+                This page shows the first five items of your data. If your data looks good, press continue. Your uploaded file contains <strong>{{ $row_count }}</strong> rows of data.
             </p>
         </div>
         @for ($i = 0; $i < 5; $i++)

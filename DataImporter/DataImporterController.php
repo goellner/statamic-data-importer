@@ -17,6 +17,10 @@ class DataImporterController extends Controller
      *
      * @return mixed
      */
+
+
+    private $imported_row_count = 0;
+
     public function index()
     {
         return $this->view('index');
@@ -43,9 +47,11 @@ class DataImporterController extends Controller
         }
 
         $this->request->session()->put('uploaded_data_keys', $uploaded_data_keys);
+        $this->request->session()->put('uploaded_row_count', count($uploaded_data));
 
         $data = [
-            'file' => $uploaded_data
+            'file' => $uploaded_data,
+            'row_count' => count($uploaded_data)
         ];
         return $this->view('showdata', $data);
     }
@@ -101,11 +107,18 @@ class DataImporterController extends Controller
         $collection = $this->request->session()->get('selected_collection');
         $this->save($entries, $collection, $mapping, $array_delimiter);
 
+        $data = [
+            'uploaded_row_count' => $this->request->session()->get('uploaded_row_count'),
+            'imported_row_count' => $this->imported_row_count
+        ];
+
         $this->request->session()->remove('uploaded_data');
+        $this->request->session()->remove('uploaded_row_count');
         $this->request->session()->remove('selected_collection');
         $this->request->session()->remove('selected_collection_fields');
 
-        return $this->view('finalize');
+
+        return $this->view('finalize', $data);
     }
 
     private function save($entries, $collection, $mapping, $array_delimiter)
@@ -124,6 +137,7 @@ class DataImporterController extends Controller
             return $ret;
         })->each(function ($entry) use ($collection, $self, $array_delimiter) {
             $self->writeEntry($collection, $entry, $array_delimiter);
+            $this->imported_row_count++;
         });
     }
 
