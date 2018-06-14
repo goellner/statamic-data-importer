@@ -9,6 +9,7 @@ use Statamic\API\Fieldset;
 use Illuminate\Http\Request;
 use Statamic\API\Entry;
 use Statamic\API\Str;
+use Statamic\API\Helper;
 
 class DataImporterController extends Controller
 {
@@ -17,9 +18,6 @@ class DataImporterController extends Controller
      *
      * @return mixed
      */
-
-
-    private $imported_row_count = 0;
 
     public function index()
     {
@@ -51,7 +49,8 @@ class DataImporterController extends Controller
 
         $data = [
             'file' => $uploaded_data,
-            'row_count' => count($uploaded_data)
+            'row_count' => count($uploaded_data),
+            'preview_count' => $this->previewCount($uploaded_data)
         ];
         return $this->view('showdata', $data);
     }
@@ -96,6 +95,8 @@ class DataImporterController extends Controller
 
     public function finalize()
     {
+        $import_id = Helper::makeUuid();
+
         $mapping = request('mapping');
         if (request('array_delmiter')) {
             $array_delimiter = request('array_delmiter');
@@ -105,11 +106,13 @@ class DataImporterController extends Controller
 
         $entries = $this->request->session()->get('uploaded_data');
         $collection = $this->request->session()->get('selected_collection');
-        $this->save($entries, $collection, $mapping, $array_delimiter);
+        $failed_entries = $this->save($entries, $collection, $mapping, $array_delimiter, $import_id);
 
         $data = [
             'uploaded_row_count' => $this->request->session()->get('uploaded_row_count'),
-            'imported_row_count' => $this->imported_row_count
+            'imported_row_count' => $this->request->session()->get('uploaded_row_count') - sizeof($failed_entries),
+            'failed_entries' => $failed_entries,
+            'failed_cnt' => sizeof($failed_entries)
         ];
 
         $this->request->session()->remove('uploaded_data');
@@ -121,9 +124,11 @@ class DataImporterController extends Controller
         return $this->view('finalize', $data);
     }
 
-    private function save($entries, $collection, $mapping, $array_delimiter)
+    private function save($entries, $collection, $mapping, $array_delimiter, $import_id)
     {
         $self = $this;
+
+        $failed = [];
 
         $mapped_data = collect($entries)->map(function ($entry) use ($mapping) {
             $ret = array();
@@ -135,15 +140,22 @@ class DataImporterController extends Controller
             }
 
             return $ret;
-        })->each(function ($entry) use ($collection, $self, $array_delimiter) {
-            $self->writeEntry($collection, $entry, $array_delimiter);
-            $this->imported_row_count++;
+        })->each(function ($entry) use ($collection, $self, $array_delimiter, $import_id, &$failed) {
+            $success = $self->writeEntry($collection, $entry, $array_delimiter, $import_id);
+
+            if(!$success) $failed[] = $entry;
         });
+
+        return $failed;
     }
 
-    private function writeEntry($collection, $mapped_data, $array_delimiter)
+    private function writeEntry($collection, $mapped_data, $array_delimiter, $import_id)
     {
         $entry = Entry::whereSlug(Str::slug($mapped_data['title']), $collection);
+
+        if($entry && $entry->get('import_id') == $import_id) {
+            return false;
+        }
 
         if (!$entry) {
             $date = date('Y-m-d-Hi');
@@ -159,6 +171,18 @@ class DataImporterController extends Controller
             $entry->set($key, $value);
         }
 
-        $entry->save();
+        $entry->set('import_id', $import_id);
+
+        $ret = $entry->save();
+
+        return true;
+    }
+
+    private function previewCount($data) {
+        if(sizeOf($data) > 5) {
+            return 5;
+        } else {
+            return sizeOf($data);
+        }
     }
 }

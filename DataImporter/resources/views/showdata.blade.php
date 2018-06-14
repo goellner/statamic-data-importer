@@ -20,10 +20,10 @@
         </div>
         <div class="card">
             <p class="help-block">
-                This page shows the first five items of your data. If your data looks good, press continue. Your uploaded file contains <strong>{{ $row_count }}</strong> rows of data.
+                This page shows the first <strong>{{ $preview_count }}</strong> items of your data. If your data looks good, press continue. Your uploaded file contains <strong>{{ $row_count }}</strong> rows of data.
             </p>
         </div>
-        @for ($i = 0; $i < 5; $i++)
+        @for ($i = 0; $i < $preview_count; $i++)
             <div class="card">
                 <table class="dossier mt-0">
                     @foreach ($file[$i] as $key => $value)
