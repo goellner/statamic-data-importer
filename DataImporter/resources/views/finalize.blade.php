@@ -20,7 +20,7 @@
             <div class="flexy mb-24">
                 <ul>
                     @foreach ($failed_entries as $entry)
-                        <li>{{ $entry['title'] }}</li>
+                        <li>{{ implode (", ", $entry) }}</li>
                     @endforeach
                 </ul>
             </div>
