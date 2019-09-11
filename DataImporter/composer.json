@@ -1,0 +1,6 @@
+{
+  "name": "goellner/dataimporter",
+  "require": {
+      "parsecsv/php-parsecsv": "^1.1.1"
+  }
+}

@@ -5,7 +5,9 @@ Imports data from CSV to Statamic collection
 
 ## Install
 
-Copy DataImporter folder to site/addons/
+Copy DataImporter folder to `site/addons/`.
+
+Run `php please update:addons` to install the addon.
 
 ## Usage
 

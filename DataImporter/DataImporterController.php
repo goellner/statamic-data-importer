@@ -6,7 +6,7 @@ use Statamic\Extend\Controller;
 
 use Statamic\API\Collection;
 use Statamic\API\Fieldset;
-use Illuminate\Http\Request;
+use ParseCsv\Csv;
 use Statamic\API\Entry;
 use Statamic\API\Str;
 use Statamic\API\Helper;
@@ -37,24 +37,17 @@ class DataImporterController extends Controller
             $csv_delimiter = ',';
         }
         $uploaded_data = $this->csv_to_array($this->request->file('file'), $csv_delimiter);
-        $this->request->session()->put('uploaded_data', $uploaded_data);
 
-        $uploaded_data_keys = [];
-        foreach ($uploaded_data as $single_uploaded_data) {
-            $uploaded_data_keys = array_keys($single_uploaded_data);
-        }
+        $this->request->session()->put('uploaded_data', $uploaded_data->data);
+        $uploaded_data_keys = $uploaded_data->titles;
 
         $this->request->session()->put('uploaded_data_keys', $uploaded_data_keys);
-        $this->request->session()->put('uploaded_row_count', count($uploaded_data));
 
         $data = [
-            'file' => $uploaded_data,
-            'row_count' => count($uploaded_data),
-            'preview_count' => $this->previewCount($uploaded_data)
+            'file' => $uploaded_data->data
         ];
         return $this->view('showdata', $data);
     }
-
 
     public function import()
     {
@@ -82,15 +75,11 @@ class DataImporterController extends Controller
 
     private function csv_to_array($file, $csv_delimiter = ',')
     {
-        $ret = array_map(function ($v) use ($csv_delimiter) {
-            return str_getcsv($v, $csv_delimiter);
-        }, file($file));
-        array_walk($ret, function (&$a) use ($ret) {
-            $a = array_combine($ret[0], $a);
-        });
-        array_shift($ret);
+        $csv = new Csv();
+        $csv->delimiter = $csv_delimiter;
+        $csv->parse($file);
 
-        return $ret;
+        return $csv;
     }
 
     public function finalize()
