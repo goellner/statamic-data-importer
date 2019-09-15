@@ -44,7 +44,9 @@ class DataImporterController extends Controller
         $this->request->session()->put('uploaded_data_keys', $uploaded_data_keys);
 
         $data = [
-            'file' => $uploaded_data->data
+            'file' => $uploaded_data->data,
+            'row_count' => count($uploaded_data->data),
+            'preview_count' => $this->previewCount($uploaded_data->data),
         ];
         return $this->view('showdata', $data);
     }
