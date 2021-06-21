@@ -111,6 +111,9 @@ class DataImporterController extends Controller
         $this->request->session()->remove('selected_collection');
         $this->request->session()->remove('selected_collection_fields');
 
+        Please::call('clear:stache');
+        Please::call('clear:cache');
+        Please::call('clear:static');
 
         return $this->view('finalize', $data);
     }
