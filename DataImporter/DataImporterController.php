@@ -79,7 +79,8 @@ class DataImporterController extends Controller
     {
         $csv = new Csv();
         $csv->delimiter = $csv_delimiter;
-        $csv->parse($file);
+        $csv->file = $file;
+        $csv->parse();
 
         return $csv;
     }
