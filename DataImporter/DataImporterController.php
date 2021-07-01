@@ -2,14 +2,14 @@
 
 namespace Statamic\Addons\DataImporter;
 
-use Statamic\Extend\Controller;
-
-use Statamic\API\Collection;
-use Statamic\API\Fieldset;
 use ParseCsv\Csv;
+use Statamic\API\Collection;
 use Statamic\API\Entry;
-use Statamic\API\Str;
+use Statamic\API\Fieldset;
 use Statamic\API\Helper;
+use Statamic\API\Please;
+use Statamic\API\Str;
+use Statamic\Extend\Controller;
 
 class DataImporterController extends Controller
 {
@@ -112,6 +112,9 @@ class DataImporterController extends Controller
         $this->request->session()->remove('selected_collection');
         $this->request->session()->remove('selected_collection_fields');
 
+        Please::call('clear:stache');
+        Please::call('clear:cache');
+        Please::call('clear:static');
 
         return $this->view('finalize', $data);
     }
