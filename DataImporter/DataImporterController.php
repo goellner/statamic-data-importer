@@ -101,8 +101,8 @@ class DataImporterController extends Controller
         $failed_entries = $this->save($entries, $collection, $mapping, $array_delimiter, $import_id);
 
         $data = [
-            'uploaded_row_count' => $this->request->session()->get('uploaded_row_count'),
-            'imported_row_count' => $this->request->session()->get('uploaded_row_count') - sizeof($failed_entries),
+            'uploaded_row_count' => count($entries),
+            'imported_row_count' => count($entries) - sizeof($failed_entries),
             'failed_entries' => $failed_entries,
             'failed_cnt' => sizeof($failed_entries)
         ];
